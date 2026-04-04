@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Wallpaper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="snakeCanvas"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const CELL_SIZE = 15;
+        const GAP_SIZE = 5;
+        const GRID_SIZE = CELL_SIZE + GAP_SIZE;
+        const INITIAL_LENGTH = 5;
+        const GROW_AMOUNT = 15;
+        const FRAME_DELAY = 30;
+        
+        let snake = [];
+        let direction = { x: 1, y: 0 };
+        let food = { x: 0, y: 0 };
+        let gridCols = 0;
+        let gridRows = 0;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gridCols = Math.floor(canvas.width / GRID_SIZE);
+            gridRows = Math.floor(canvas.height / GRID_SIZE);
+        }
+        
+        function toPixelPos(gridPos) {
+            return {
+                x: gridPos.x * GRID_SIZE,
+                y: gridPos.y * GRID_SIZE
+            };
+        }
+        
+        function initSnake() {
+            snake = [];
+            const startGridX = Math.floor(gridCols / 2);
+            const startGridY = Math.floor(gridRows / 2);
+            
+            for (let i = 0; i < INITIAL_LENGTH; i++) {
+                snake.push({ x: startGridX - i, y: startGridY });
+            }
+            
+            const directions = [
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 0, y: 1 },
+                { x: 0, y: -1 }
+            ];
+            direction = directions[Math.floor(Math.random() * directions.length)];
+        }
+        
+        function spawnFood() {
+            let newFood;
+            let attempts = 0;
+            const maxAttempts = gridCols * gridRows;
+            
+            do {
+                newFood = {
+                    x: Math.floor(Math.random() * gridCols),
+                    y: Math.floor(Math.random() * gridRows)
+                };
+                attempts++;
+            } while (isOnSnake(newFood.x, newFood.y) && attempts < maxAttempts);
+            
+            food = newFood;
+        }
+        
+        function isOnSnake(x, y) {
+            return snake.some(segment => segment.x === x && segment.y === y);
+        }
+        
+        function countAccessibleCells(startX, startY, snakeBody) {
+            const visited = new Set();
+            const queue = [{ x: startX, y: startY }];
+            visited.add(`${startX},${startY}`);
+            
+            const snakeSet = new Set(snakeBody.map(s => `${s.x},${s.y}`));
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                
+                const neighbors = [
+                    { x: current.x + 1, y: current.y },
+                    { x: current.x - 1, y: current.y },
+                    { x: current.x, y: current.y + 1 },
+                    { x: current.x, y: current.y - 1 }
+                ];
+                
+                for (const neighbor of neighbors) {
+                    const key = `${neighbor.x},${neighbor.y}`;
+                    if (!visited.has(key) && 
+                        neighbor.x >= 0 && neighbor.x < gridCols &&
+                        neighbor.y >= 0 && neighbor.y < gridRows &&
+                        !snakeSet.has(key)) {
+                        visited.add(key);
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            return visited.size;
+        }
+        
+        function isSafeMove(newX, newY, snakeBody) {
+            if (newX < 0 || newX >= gridCols || newY < 0 || newY >= gridRows) {
+                return false;
+            }
+            
+            for (let i = 0; i < snakeBody.length - 1; i++) {
+                if (snakeBody[i].x === newX && snakeBody[i].y === newY) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        function getDistance(pos1, pos2) {
+            return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
+        }
+        
+        function chooseDirection() {
+            const head = snake[0];
+            const oppositeDir = { x: -direction.x, y: -direction.y };
+            
+            const possibleMoves = [
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 0, y: 1 },
+                { x: 0, y: -1 }
+            ];
+            
+            const safeMoves = [];
+            
+            for (const move of possibleMoves) {
+                if (move.x === oppositeDir.x && move.y === oppositeDir.y) {
+                    continue;
+                }
+                
+                const newHead = { x: head.x + move.x, y: head.y + move.y };
+                
+                if (!isSafeMove(newHead.x, newHead.y, snake)) {
+                    continue;
+                }
+                
+                const futureSnake = [{ x: newHead.x, y: newHead.y }, ...snake.slice(0, -1)];
+                const accessibleCells = countAccessibleCells(newHead.x, newHead.y, futureSnake);
+                
+                safeMoves.push({
+                    move: move,
+                    newHead: newHead,
+                    distance: getDistance(newHead, food),
+                    space: accessibleCells
+                });
+            }
+            
+            if (safeMoves.length === 0) {
+                return direction;
+            }
+            
+            safeMoves.sort((a, b) => {
+                const minSpace = snake.length + 5;
+                const aHasSpace = a.space >= minSpace;
+                const bHasSpace = b.space >= minSpace;
+                
+                if (aHasSpace && !bHasSpace) return -1;
+                if (!aHasSpace && bHasSpace) return 1;
+                
+                if (aHasSpace && bHasSpace) {
+                    return a.distance - b.distance;
+                }
+                
+                return b.space - a.space;
+            });
+            
+            return safeMoves[0].move;
+        }
+        
+        function moveSnake() {
+            direction = chooseDirection();
+            
+            const head = { ...snake[0] };
+            head.x += direction.x;
+            head.y += direction.y;
+            
+            if (head.x < 0) head.x = gridCols - 1;
+            if (head.x >= gridCols) head.x = 0;
+            if (head.y < 0) head.y = gridRows - 1;
+            if (head.y >= gridRows) head.y = 0;
+            
+            if (isOnSnake(head.x, head.y)) {
+                initSnake();
+                spawnFood();
+                return;
+            }
+            
+            snake.unshift(head);
+            
+            if (head.x === food.x && head.y === food.y) {
+                for (let i = 1; i < GROW_AMOUNT; i++) {
+                    const tail = snake[snake.length - 1];
+                    snake.push({ ...tail });
+                }
+                spawnFood();
+            } else {
+                snake.pop();
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#ffffff';
+            
+            for (let i = 0; i < snake.length; i++) {
+                const segment = snake[i];
+                const pixelPos = toPixelPos(segment);
+                
+                let prevDir = null;
+                let nextDir = null;
+                
+                if (i > 0) {
+                    const prev = snake[i - 1];
+                    if (prev.x === segment.x + 1) prevDir = 'right';
+                    else if (prev.x === segment.x - 1) prevDir = 'left';
+                    else if (prev.y === segment.y + 1) prevDir = 'down';
+                    else if (prev.y === segment.y - 1) prevDir = 'up';
+                }
+                
+                if (i < snake.length - 1) {
+                    const next = snake[i + 1];
+                    if (next.x === segment.x + 1) nextDir = 'right';
+                    else if (next.x === segment.x - 1) nextDir = 'left';
+                    else if (next.y === segment.y + 1) nextDir = 'down';
+                    else if (next.y === segment.y - 1) nextDir = 'up';
+                }
+                
+                const isCorner = prevDir && nextDir && 
+                    ((prevDir === 'left' || prevDir === 'right') !== (nextDir === 'left' || nextDir === 'right'));
+                
+                if (isCorner) {
+                    const cx = pixelPos.x + GRID_SIZE / 2;
+                    const cy = pixelPos.y + GRID_SIZE / 2;
+                    const r = CELL_SIZE / 2;
+                    
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    if (prevDir === 'right') {
+                        ctx.fillRect(pixelPos.x + GRID_SIZE / 2, cy - r, GRID_SIZE / 2, CELL_SIZE);
+                    } else if (prevDir === 'left') {
+                        ctx.fillRect(pixelPos.x, cy - r, GRID_SIZE / 2, CELL_SIZE);
+                    } else if (prevDir === 'down') {
+                        ctx.fillRect(cx - r, pixelPos.y + GRID_SIZE / 2, CELL_SIZE, GRID_SIZE / 2);
+                    } else if (prevDir === 'up') {
+                        ctx.fillRect(cx - r, pixelPos.y, CELL_SIZE, GRID_SIZE / 2);
+                    }
+                    
+                    if (nextDir === 'right') {
+                        ctx.fillRect(pixelPos.x + GRID_SIZE / 2, cy - r, GRID_SIZE / 2, CELL_SIZE);
+                    } else if (nextDir === 'left') {
+                        ctx.fillRect(pixelPos.x, cy - r, GRID_SIZE / 2, CELL_SIZE);
+                    } else if (nextDir === 'down') {
+                        ctx.fillRect(cx - r, pixelPos.y + GRID_SIZE / 2, CELL_SIZE, GRID_SIZE / 2);
+                    } else if (nextDir === 'up') {
+                        ctx.fillRect(cx - r, pixelPos.y, CELL_SIZE, GRID_SIZE / 2);
+                    }
+                } else {
+                    let x = pixelPos.x + GAP_SIZE / 2;
+                    let y = pixelPos.y + GAP_SIZE / 2;
+                    let width = CELL_SIZE;
+                    let height = CELL_SIZE;
+                    
+                    if (prevDir === 'right' || nextDir === 'right') width += GAP_SIZE / 2;
+                    if (prevDir === 'left' || nextDir === 'left') { x -= GAP_SIZE / 2; width += GAP_SIZE / 2; }
+                    if (prevDir === 'down' || nextDir === 'down') height += GAP_SIZE / 2;
+                    if (prevDir === 'up' || nextDir === 'up') { y -= GAP_SIZE / 2; height += GAP_SIZE / 2; }
+                    
+                    ctx.fillRect(x, y, width, height);
+                }
+            }
+            
+            ctx.fillStyle = '#ff0000';
+            const foodPixel = toPixelPos(food);
+            ctx.fillRect(foodPixel.x + GAP_SIZE / 2, foodPixel.y + GAP_SIZE / 2, CELL_SIZE, CELL_SIZE);
+        }
+        
+        function gameLoop() {
+            moveSnake();
+            draw();
+            setTimeout(gameLoop, FRAME_DELAY);
+        }
+        
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            spawnFood();
+        });
+        
+        resizeCanvas();
+        initSnake();
+        spawnFood();
+        gameLoop();
+    </script>
+</body>
+</html>
