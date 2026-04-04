@@ -1,7 +1,8 @@
+English | [cn 中文文档](README_CN.md)
 # Snake Dynamic Wallpaper
 
 A snake game animation as your Windows desktop wallpaper.
-
+![](images/example.png)
 ## Installation
 
 1. Install [Lively Wallpaper](https://www.microsoft.com/store/productId/9NTM2QC6QWS7) from Microsoft Store
