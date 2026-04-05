@@ -2,7 +2,22 @@ English | [cn 中文文档](README_CN.md)
 # Snake Dynamic Wallpaper
 
 A snake game animation as your Windows desktop wallpaper.
+
 ![](https://cdn.jsdelivr.net/gh/Gh05tW/snake-dynamic-wallpaper@main/images/example.png)
+
+## Features
+
+- **AI Pathfinding**: Snake actively seeks food using greedy algorithm
+- **Collision Avoidance**: Avoids self-collision and screen boundaries
+- **Smooth Rendering**: Rounded corners for natural movement
+- **Continuous Body**: Seamless body segments along the path
+
+## Requirements
+
+- **Display**: 1920x1080 resolution
+- **OS**: Windows 10/11
+- **Software**: [Lively Wallpaper](https://www.microsoft.com/store/productId/9NTM2QC6QWS7)
+
 ## Installation
 
 1. Install [Lively Wallpaper](https://www.microsoft.com/store/productId/9NTM2QC6QWS7) from Microsoft Store
@@ -26,8 +41,9 @@ const FRAME_DELAY = 30;    // Speed (ms, lower = faster)
 ```
 dynamic-wallpaper/
 ├── lively/
-│   ├── index.html         # Wallpaper file
-│   └── LivelyInfo.json    # Config
+│   └── index.html         # Wallpaper file
+├── images/
+│   └── example.png        # Screenshot
 └── README.md
 ```
 

@@ -1,8 +1,22 @@
 🇨🇳 中文文档 | [English](README.md)
 # 贪吃蛇动态壁纸
 
-一个贪吃蛇游戏动画,作为 Windows 桌面壁纸。
+一个贪吃蛇游戏动画，作为 Windows 桌面壁纸。
+
 ![](https://cdn.jsdelivr.net/gh/Gh05tW/snake-dynamic-wallpaper@main/images/example.png)
+
+## 功能特点
+
+- **AI 寻路**：贪吃蛇使用贪心算法主动寻找食物
+- **碰撞躲避**：自动躲避自身和屏幕边界
+- **平滑渲染**：转角圆滑处理，移动更自然
+- **连续蛇身**：路径上蛇身无缝连接
+
+## 系统要求
+
+- **显示器**：1920x1080 分辨率
+- **操作系统**：Windows 10/11
+- **软件**：[Lively Wallpaper](https://www.microsoft.com/store/productId/9NTM2QC6QWS7)
 
 ## 安装
 
@@ -27,8 +41,9 @@ const FRAME_DELAY = 30;    // 速度 (毫秒，越小越快)
 ```
 dynamic-wallpaper/
 ├── lively/
-│   ├── index.html         # 壁纸文件
-│   └── LivelyInfo.json    # 配置文件
+│   └── index.html         # 壁纸文件
+├── images/
+│   └── example.png        # 截图
 └── README.md
 ```
 
