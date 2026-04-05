@@ -211,10 +211,11 @@
             head.x += direction.x;
             head.y += direction.y;
             
-            if (head.x < 0) head.x = gridCols - 1;
-            if (head.x >= gridCols) head.x = 0;
-            if (head.y < 0) head.y = gridRows - 1;
-            if (head.y >= gridRows) head.y = 0;
+            if (head.x < 0 || head.x >= gridCols || head.y < 0 || head.y >= gridRows) {
+                initSnake();
+                spawnFood();
+                return;
+            }
             
             if (isOnSnake(head.x, head.y)) {
                 initSnake();

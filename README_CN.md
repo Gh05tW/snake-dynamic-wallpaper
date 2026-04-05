@@ -2,7 +2,7 @@
 # 贪吃蛇动态壁纸
 
 一个贪吃蛇游戏动画,作为 Windows 桌面壁纸。
-![](images/example.png)
+![](https://cdn.jsdelivr.net/gh/Gh05tW/snake-dynamic-wallpaper@main/images/example.png)
 
 ## 安装
 
